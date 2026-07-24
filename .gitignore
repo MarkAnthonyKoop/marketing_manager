@@ -1,0 +1,22 @@
+# secrets / keys
+.env
+*.pem
+*_ed25519
+*_ed25519.pub
+id_rsa*
+id_ed25519*
+# ephemeral / logs / transcripts (never publish)
+*session_log*
+*SESSION*.md
+HANDOFF*.md
+BRINGUP*.md
+claude-conversation-*.md
+*credentials*.md
+*sudoers*.md
+# python / node cruft
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.DS_Store

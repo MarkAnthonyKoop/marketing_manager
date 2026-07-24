@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marketing_manager"
+version = "0.1.0"
+description = "AI marketing manager: a claude-backed chatbot that drives social_publisher + platform managers, schedules posts, and runs drip campaigns."
+requires-python = ">=3.10"
+# Siblings required at runtime (import social_publisher; shell out to *_manager
+# CLIs and the `claude` binary). Install social_publisher too, or run with
+# PYTHONPATH=~/claude. No external pip deps — pure stdlib + the toolkit.
+dependencies = []
+
+[tool.setuptools]
+packages = ["marketing_manager"]
+
+[tool.setuptools.package-dir]
+"marketing_manager" = "."
