@@ -122,4 +122,29 @@ def test_html_shell_has_onboarding(live_server):
     import urllib.request
     with urllib.request.urlopen(f"{live_server}/", timeout=10) as r:
         html = r.read().decode()
-    assert 'id="wel"' in html and "startTour" in html and 'id="t-guide"' in html
+    assert 'id="wel"' in html and 'id="t-guide"' in html
+    assert '/console.js' in html and '/console.css' in html
+
+
+def test_static_assets_served(live_server):
+    import urllib.request
+    with urllib.request.urlopen(f"{live_server}/console.js", timeout=10) as r:
+        assert r.status == 200 and "javascript" in r.headers["Content-Type"]
+        assert "startTour" in r.read().decode()
+    with urllib.request.urlopen(f"{live_server}/console.css", timeout=10) as r:
+        assert r.status == 200 and "css" in r.headers["Content-Type"]
+        assert ".chip" in r.read().decode()
+
+
+def test_page_is_strict_csp_ready(live_server):
+    """The edge CSP is script-src/style-src 'self' — the page must carry ZERO
+    inline script/style: no <script> body, no <style>, no on*= handler attrs,
+    no style= attrs. A regression here silently breaks the whole console."""
+    import re
+    import urllib.request
+    with urllib.request.urlopen(f"{live_server}/", timeout=10) as r:
+        html = r.read().decode()
+    assert "<style" not in html
+    assert re.search(r"<script(?![^>]*\bsrc=)", html) is None   # only src= scripts
+    assert re.search(r"\son[a-z]+\s*=", html, re.I) is None      # no onclick= etc.
+    assert re.search(r"\sstyle\s*=", html, re.I) is None         # no style= attrs

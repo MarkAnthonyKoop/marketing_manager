@@ -77,6 +77,27 @@ def main() -> int:
 
     from marketing_manager import server  # noqa: PLC0415 — after env is set
     os.environ.update({k: env[k] for k in env})
+
+    # Enforce the PRODUCTION strict CSP on every static response so the whole
+    # E2E run proves the page works with no inline script/style allowed —
+    # locally http.server sends no CSP; in prod Caddy does.
+    STRICT_CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; "
+                  "connect-src 'self'; img-src 'self' data:; object-src 'none'; "
+                  "base-uri 'self'; frame-ancestors 'none'; form-action 'self'")
+    orig_static = server.ConsoleHandler._send_static
+
+    def csp_static(self, body, ctype):
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Security-Policy", STRICT_CSP)
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
+    server.ConsoleHandler._send_static = csp_static
+    assert orig_static  # keep a handle; restored implicitly at process exit
+
     srv = server.make_server("127.0.0.1", 0)
     port = srv.server_address[1]
     threading.Thread(target=lambda: srv.serve_forever(poll_interval=0.05), daemon=True).start()
@@ -163,6 +184,16 @@ def main() -> int:
 
         # --- esc helper ---
         check("esc escapes all metachars", page.js("esc('<\"&>')==='&lt;&quot;&amp;&gt;'"))
+
+        # --- strict CSP actually enforced this run (belt & braces) ---
+        check("strict CSP header present on page",
+              page.js("fetch('/').then(r=>r.headers.get('content-security-policy')||'')"
+                      ".then(c=>c.includes(\"script-src 'self'\")&&!c.includes('unsafe-inline'))",
+                      await_promise=True))
+        check("inline script is BLOCKED by CSP", page.js(
+            "(()=>{const s=document.createElement('script');"
+            "s.textContent='window.__inline_ran=1';document.body.appendChild(s);"
+            "return window.__inline_ran===undefined;})()"))
 
         # --- persistence: onboarded → no welcome on reload ---
         page.js("localStorage.setItem('mc_onboarded','1')")

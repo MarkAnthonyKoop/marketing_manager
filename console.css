@@ -1,0 +1,45 @@
+/* Console styles — served at /console.css so the CSP can be style-src 'self'
+   (no <style> block, no style= attributes; JS uses .style properties, which
+   CSP does not gate). Utility classes at the bottom replace old inline styles. */
+:root { --bg:#0f1115; --panel:#181b22; --line:#2a2f3a; --fg:#e8eaed; --mut:#9aa3b2;
+        --accent:#4f8cff; --ok:#2ecc71; --warn:#f5a623; --bad:#ff5c5c; }
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { margin:0; font:16px/1.45 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;
+       background:var(--bg); color:var(--fg); padding-bottom:env(safe-area-inset-bottom); }
+header { padding:14px 16px; border-bottom:1px solid var(--line); position:sticky; top:0;
+         background:var(--bg); display:flex; justify-content:space-between; align-items:center; }
+header b { font-size:17px } header small { color:var(--mut); cursor:pointer }
+nav { display:flex; overflow-x:auto; border-bottom:1px solid var(--line); position:sticky;
+      top:53px; background:var(--bg); z-index:5; }
+nav button { flex:1 0 auto; background:none; border:none; color:var(--mut); padding:12px 16px;
+      font-size:15px; border-bottom:2px solid transparent; }
+nav button.on { color:var(--fg); border-bottom-color:var(--accent); }
+main { padding:16px; max-width:680px; margin:0 auto; }
+.tab { display:none } .tab.on { display:block }
+label { display:block; color:var(--mut); font-size:13px; margin:12px 0 4px; }
+textarea, input, select { width:100%; background:var(--panel); border:1px solid var(--line);
+      color:var(--fg); border-radius:10px; padding:12px; font:inherit; }
+textarea { min-height:96px; resize:vertical }
+button.act { width:100%; background:var(--accent); color:#fff; border:none; border-radius:12px;
+      padding:14px; font-size:16px; font-weight:600; margin-top:14px; }
+button.act.danger { background:var(--bad) } button.ghost { background:var(--panel); color:var(--fg);
+      border:1px solid var(--line); border-radius:10px; padding:10px; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px }
+.chip { padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel);
+      color:var(--mut); font-size:14px; }
+.chip.on { background:var(--accent); color:#fff; border-color:var(--accent) }
+.chip .g { font-size:11px; opacity:.7 }
+.row { display:flex; align-items:center; gap:10px; margin-top:12px }
+.row label { margin:0 } .switch { width:auto }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px;
+      margin-top:10px; font-size:14px; }
+.res { font-size:13px } .res .ok{color:var(--ok)} .res .skip{color:var(--warn)} .res .bad{color:var(--bad)}
+pre { white-space:pre-wrap; word-break:break-word; margin:6px 0 0; color:var(--mut); font-size:12px }
+.gate { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center;
+      justify-content:center; padding:24px; z-index:50 }
+.gate .box { width:100%; max-width:340px } .hide { display:none !important }
+.muted { color:var(--mut); font-size:13px } .mt { margin-top:14px }
+/* utilities replacing former inline style= attributes */
+.f1 { flex:1 } .big { font-size:20px } .ctr { text-align:center }
+.mt8 { margin-top:8px } .linkmut { color:var(--mut) }
+.act.alt { background:var(--panel); border:1px solid var(--line); color:var(--fg) }

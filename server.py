@@ -28,6 +28,10 @@ from . import api
 
 TOKEN_ENV = "MARKETING_CONSOLE_TOKEN"
 _HTML = Path(__file__).parent / "console.html"
+# Static assets split out of the HTML so the edge CSP needs no 'unsafe-inline':
+# the page carries zero inline script/style (see console.html header comment).
+_ASSETS = {"/console.js": ("console.js", "text/javascript; charset=utf-8"),
+           "/console.css": ("console.css", "text/css; charset=utf-8")}
 
 
 def _token() -> str | None:
@@ -68,6 +72,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path in ("/", "/index.html"):
             return self._serve_html()
+        if path in _ASSETS:
+            return self._serve_asset(path)
         if path == "/healthz":
             return self._json({"ok": True})
         if not path.startswith("/api/"):
@@ -129,11 +135,25 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             html = _HTML.read_bytes()
         except FileNotFoundError:
             html = b"<h1>console.html missing</h1>"
+        self._send_static(html, "text/html; charset=utf-8")
+
+    def _serve_asset(self, path: str):
+        name, ctype = _ASSETS[path]
+        try:
+            body = (Path(__file__).parent / name).read_bytes()
+        except FileNotFoundError:
+            return self._json({"error": "not found"}, 404)
+        self._send_static(body, ctype)
+
+    def _send_static(self, body: bytes, ctype: str):
         self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(html)))
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        # no-cache: a stale cached page referencing old inline script would be
+        # broken by the strict CSP after a deploy — always revalidate.
+        self.send_header("Cache-Control", "no-cache")
         self.end_headers()
-        self.wfile.write(html)
+        self.wfile.write(body)
 
 
 class _ConsoleServer(ThreadingHTTPServer):

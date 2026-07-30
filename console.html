@@ -4,60 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Marketing Console</title>
-<style>
-  :root { --bg:#0f1115; --panel:#181b22; --line:#2a2f3a; --fg:#e8eaed; --mut:#9aa3b2;
-          --accent:#4f8cff; --ok:#2ecc71; --warn:#f5a623; --bad:#ff5c5c; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; font:16px/1.45 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;
-         background:var(--bg); color:var(--fg); padding-bottom:env(safe-area-inset-bottom); }
-  header { padding:14px 16px; border-bottom:1px solid var(--line); position:sticky; top:0;
-           background:var(--bg); display:flex; justify-content:space-between; align-items:center; }
-  header b { font-size:17px } header small { color:var(--mut) }
-  nav { display:flex; overflow-x:auto; border-bottom:1px solid var(--line); position:sticky;
-        top:53px; background:var(--bg); z-index:5; }
-  nav button { flex:1 0 auto; background:none; border:none; color:var(--mut); padding:12px 16px;
-        font-size:15px; border-bottom:2px solid transparent; }
-  nav button.on { color:var(--fg); border-bottom-color:var(--accent); }
-  main { padding:16px; max-width:680px; margin:0 auto; }
-  .tab { display:none } .tab.on { display:block }
-  label { display:block; color:var(--mut); font-size:13px; margin:12px 0 4px; }
-  textarea, input, select { width:100%; background:var(--panel); border:1px solid var(--line);
-        color:var(--fg); border-radius:10px; padding:12px; font:inherit; }
-  textarea { min-height:96px; resize:vertical }
-  button.act { width:100%; background:var(--accent); color:#fff; border:none; border-radius:12px;
-        padding:14px; font-size:16px; font-weight:600; margin-top:14px; }
-  button.act.danger { background:var(--bad) } button.ghost { background:var(--panel); color:var(--fg);
-        border:1px solid var(--line); border-radius:10px; padding:10px; }
-  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px }
-  .chip { padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel);
-        color:var(--mut); font-size:14px; }
-  .chip.on { background:var(--accent); color:#fff; border-color:var(--accent) }
-  .chip .g { font-size:11px; opacity:.7 }
-  .row { display:flex; align-items:center; gap:10px; margin-top:12px }
-  .row label { margin:0 } .switch { width:auto }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px;
-        margin-top:10px; font-size:14px; }
-  .res { font-size:13px } .res .ok{color:var(--ok)} .res .skip{color:var(--warn)} .res .bad{color:var(--bad)}
-  pre { white-space:pre-wrap; word-break:break-word; margin:6px 0 0; color:var(--mut); font-size:12px }
-  .gate { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center;
-        justify-content:center; padding:24px; z-index:50 }
-  .gate .box { width:100%; max-width:340px } .hide { display:none !important }
-  .muted { color:var(--mut); font-size:13px } .mt { margin-top:14px }
-</style>
+<link rel="stylesheet" href="/console.css">
+<!-- No inline script/style/handlers anywhere in this file: the edge CSP is
+     script-src 'self'; style-src 'self'. Logic lives in /console.js (wire()). -->
 </head>
 <body>
 <div class="gate" id="gate"><div class="box">
   <b>Marketing Console</b>
   <p class="muted">Enter your access token to continue.</p>
-  <input id="tok" type="password" placeholder="access token" autocomplete="off" autofocus
-         onkeydown="if(event.key==='Enter')login()">
-  <button class="act" onclick="login()">Unlock</button>
+  <input id="tok" type="password" placeholder="access token" autocomplete="off" autofocus>
+  <button class="act" id="tok-go">Unlock</button>
   <p class="muted" id="gateErr"></p>
 </div></div>
 
 <div class="gate hide" id="wel"><div class="box" id="welBox"></div></div>
 
-<header><b id="brand">Marketing Console</b><small id="who" onclick="showWelcome(true)" style="cursor:pointer">tour ▸</small></header>
+<header><b id="brand">Marketing Console</b><small id="who">tour ▸</small></header>
 <nav id="nav"></nav>
 <main>
   <section class="tab on" id="t-compose">
@@ -65,7 +27,7 @@
     <label>Link (optional)</label><input id="c-link" placeholder="https://…">
     <label>Platforms</label><div class="chips" id="c-plats"></div>
     <div class="row"><input class="switch" type="checkbox" id="c-dry" checked><label for="c-dry">Dry-run (preview only — don't post)</label></div>
-    <button class="act" id="c-go" onclick="broadcast()">Preview / Broadcast</button>
+    <button class="act" id="c-go">Preview / Broadcast</button>
     <div id="c-out"></div>
   </section>
 
@@ -74,9 +36,9 @@
     <label>Platforms</label><div class="chips" id="cm-plats"></div>
     <label>Steps — one per line as <code>days: message</code></label>
     <textarea id="cm-steps" placeholder="0: Kickoff — we're live!&#10;2: Reminder + link&#10;7: Last call"></textarea>
-    <button class="act" onclick="createCampaign()">Create campaign</button>
-    <div class="row"><button class="ghost" style="flex:1" onclick="tick('campaigns',true)">Tick (dry)</button>
-      <button class="ghost" style="flex:1" onclick="tick('campaigns',false)">Tick (send)</button></div>
+    <button class="act" id="cm-create">Create campaign</button>
+    <div class="row"><button class="ghost f1" id="cm-tickdry">Tick (dry)</button>
+      <button class="ghost f1" id="cm-ticksend">Tick (send)</button></div>
     <div id="cm-list" class="mt"></div>
   </section>
 
@@ -84,15 +46,15 @@
     <label>When (ISO, e.g. 2026-07-01T13:00:00Z)</label><input id="s-at" placeholder="2026-07-01T13:00:00Z">
     <label>Message</label><textarea id="s-text" placeholder="One-off scheduled post"></textarea>
     <label>Platforms</label><div class="chips" id="s-plats"></div>
-    <button class="act" onclick="addSchedule()">Schedule it</button>
-    <div class="row"><button class="ghost" style="flex:1" onclick="tick('schedule',true)">Tick (dry)</button>
-      <button class="ghost" style="flex:1" onclick="tick('schedule',false)">Tick (send)</button></div>
+    <button class="act" id="s-add">Schedule it</button>
+    <div class="row"><button class="ghost f1" id="s-tickdry">Tick (dry)</button>
+      <button class="ghost f1" id="s-ticksend">Tick (send)</button></div>
     <div id="s-list" class="mt"></div>
   </section>
 
   <section class="tab" id="t-monitor">
     <label>Search platforms for…</label><input id="m-q" placeholder="brand, mention, keyword">
-    <button class="act" onclick="monitor()">Scan</button>
+    <button class="act" id="m-go">Scan</button>
     <div id="m-out"></div>
     <h4 class="mt">Recent activity</h4><div id="m-hist"></div>
   </section>
@@ -103,210 +65,10 @@
     <p class="muted">Ask the AI marketing manager to draft, plan, or summarize.</p>
     <div id="ch-log"></div>
     <textarea id="ch-msg" placeholder="Draft a launch post and preview it everywhere…"></textarea>
-    <button class="act" onclick="chat()">Send</button>
+    <button class="act" id="ch-go">Send</button>
   </section>
 </main>
 
-<script>
-const TABS = [["compose","Compose"],["campaigns","Campaigns"],["schedule","Schedule"],["monitor","Monitor"],["chat","Chat"],["guide","Guide"]];
-let TOKEN = localStorage.getItem("mc_token") || "";
-let SESSION = null, PLATFORMS = [];
-const $ = s => document.querySelector(s);
-const el = (t,c,h) => { const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; };
-// Escape EVERY dynamic value before it touches innerHTML — campaign names, chat
-// replies, scrape results etc. are attacker-influenceable (stored XSS otherwise,
-// and our CSP allows inline script so it would execute).
-const esc = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const note = (sel,msg,cls) => { const b=$(sel); b.prepend(el("div","card "+(cls||""),msg)); };
-const fail = e => `<span class="res"><span class="bad">error: ${esc(e.message||e)}</span></span>`;
-
-async function call(method, path, body){
-  const r = await fetch(path, {method, headers:{"X-Console-Token":TOKEN,
-    ...(body?{"Content-Type":"application/json"}:{})}, body: body?JSON.stringify(body):undefined});
-  if(r.status===401){ throw new Error("unauthorized"); }
-  return r.json();
-}
-async function login(){
-  TOKEN = $("#tok").value.trim();
-  try{ await call("GET","/api/platforms"); localStorage.setItem("mc_token",TOKEN);
-       $("#gate").classList.add("hide"); init(); }
-  catch(e){ $("#gateErr").textContent = "Invalid token."; }
-}
-const NAVBTN = {};
-function switchTab(id){
-  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
-  NAVBTN[id].classList.add("on"); $("#t-"+id).classList.add("on");
-  if(id==="campaigns")loadCampaigns(); if(id==="schedule")loadSchedule(); if(id==="monitor")loadHistory();
-}
-function buildNav(){
-  const nav=$("#nav");
-  TABS.forEach(([id,name],i)=>{ const b=el("button",i===0?"on":"",name);
-    b.onclick=()=>switchTab(id); NAVBTN[id]=b; nav.appendChild(b); });
-}
-function chips(container, selected){
-  const c=$(container); c.innerHTML="";
-  PLATFORMS.forEach(p=>{ const on = selected.includes(p.key);
-    const e=el("div","chip"+(on?" on":""), `${esc(p.label)} <span class="g">${esc(p.status)}</span>`);
-    e.dataset.key=p.key; e.onclick=()=>e.classList.toggle("on"); c.appendChild(e); });
-}
-function picked(container){ return [...document.querySelectorAll(container+" .chip.on")].map(e=>e.dataset.key); }
-
-async function init(){
-  const d = await call("GET","/api/platforms"); PLATFORMS=d.platforms;
-  chips("#c-plats", d.working); chips("#cm-plats", d.working); chips("#s-plats", d.working);
-  loadGuide();
-}
-
-// ---- onboarding: welcome dialog, guided tours, the guide tab ----
-let GUIDE=null;
-const TOURS=[
- ["🚀","Start a drip campaign","I want to start a drip campaign (a series of posts that go out automatically over days)."],
- ["✍️","Write a post & preview it","I want to write one post and preview how it would look on every platform — without actually posting anything."],
- ["📅","Schedule a post for later","I want to schedule a post to go out at a specific date and time."],
- ["👀","See what people are saying","I want to search social platforms for what people are saying about a topic I care about."],
- ["🎓","Teach me to talk to AI","Teach me how to talk to an AI assistant like you so I get great results — short lesson, real examples I can copy, then quiz me gently."],
- ["✨","Surprise me","Show me the most useful thing you can do for someone launching a new venture."]];
-async function loadGuide(){
-  try{ GUIDE = await call("GET","/api/guide"); }catch(e){ GUIDE=null; }
-  if(GUIDE&&GUIDE.brand){ $("#brand").textContent=GUIDE.brand; document.title=GUIDE.brand; }
-  $("#g-body").innerHTML = (GUIDE&&GUIDE.markdown) ? md2html(GUIDE.markdown)
-    : "<p class='muted'>No guide installed.</p>";
-  if(!localStorage.getItem("mc_onboarded")) showWelcome();
-}
-function showWelcome(){
-  const g=GUIDE||{};
-  $("#welBox").innerHTML=`<b style="font-size:20px">${esc(g.greeting||"Hey — welcome.")}</b>
-  <p class="muted">I'm an AI marketing manager you talk to in plain English. Nothing ever posts
-  publicly unless you clearly say so — everything starts as a safe preview.</p>
-  <button class="act" onclick="openGuide()">📖 Get to know me</button>
-  <button class="act" style="background:var(--panel);border:1px solid var(--line)" onclick="tourMenu()">Continue →</button>
-  <p class="muted mt" style="text-align:center"><a href="#" style="color:var(--mut)" onclick="closeWelcome();return false">skip for now</a></p>`;
-  $("#wel").classList.remove("hide");
-}
-function tourMenu(){
-  $("#welBox").innerHTML=`<b>What should we do first?</b>
-  <p class="muted">Pick one — I'll walk you through it, one small step at a time. You can't break
-  anything; it's all preview until you say go.</p>`+
-  TOURS.map((t,i)=>`<button class="act" style="margin-top:8px" onclick="startTour(${i})">${t[0]} ${t[1]}</button>`).join("")+
-  `<p class="muted mt" style="text-align:center"><a href="#" style="color:var(--mut)" onclick="closeWelcome();return false">skip for now</a></p>`;
-}
-function closeWelcome(){ localStorage.setItem("mc_onboarded","1"); $("#wel").classList.add("hide"); }
-function openGuide(){ closeWelcome(); switchTab("guide"); }
-function startTour(i){
-  closeWelcome(); switchTab("chat");
-  $("#ch-msg").value = "TUTORIAL: I'm brand new to this console and to AI. "+TOURS[i][2]+
-   " Walk me through it one small step at a time — tell me exactly what to tap or type here"+
-   " (my tabs are Compose, Campaigns, Schedule, Monitor, Chat, Guide), ask me one question at a"+
-   " time, keep everything in preview/dry-run unless I clearly say to post for real, and explain"+
-   " any jargon in plain words.";
-  chat();
-}
-function md2html(md){
-  const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
-  const inline=s=>s.replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>");
-  let out="", list=false, para=[];
-  const flush=()=>{ if(para.length){ out+="<p>"+inline(para.join("<br>"))+"</p>"; para=[]; } };
-  const endList=()=>{ if(list){ out+="</ul>"; list=false; } };
-  esc(md).split("\n").forEach(ln=>{
-    const t=ln.trim();
-    if(!t){ flush(); endList(); return; }
-    const h=t.match(/^(#{1,4}) (.*)/);
-    if(h){ flush(); endList(); out+=`<h${h[1].length+1}>${inline(h[2])}</h${h[1].length+1}>`; return; }
-    if(/^[-•*] /.test(t)){ flush(); if(!list){ out+="<ul>"; list=true; } out+="<li>"+inline(t.slice(2))+"</li>"; return; }
-    para.push(t); });
-  flush(); endList(); return out;
-}
-async function broadcast(){
-  const dry=$("#c-dry").checked;
-  if(!dry && !confirm("Post this for real to the selected platforms?")) return;
-  const out=$("#c-out"); out.innerHTML="<p class='muted'>working…</p>";
-  try{
-    const d = await call("POST","/api/broadcast",{ text:$("#c-text").value, link:$("#c-link").value,
-      platforms:picked("#c-plats"), dry_run:dry });
-    out.innerHTML = `<div class="card"><b>${d.dry_run?"Preview (not posted)":"Posted"}</b> · `+
-      `${d.summary.posted} sent / ${d.summary.skipped} skipped / ${d.summary.failed} failed`+
-      `<div class="res mt">`+ d.results.map(r=>{
-        const cls = r.skipped?"skip":(r.ok?"ok":"bad"); const tag=r.skipped?"skip":(r.ok?"ok":"FAIL");
-        return `<div class="${cls}">[${tag}] ${esc(r.platform)} — ${esc(r.url||r.error||"")}</div>`;}).join("")+`</div></div>`;
-  }catch(e){ out.innerHTML=`<div class="card">${fail(e)}</div>`; }
-}
-async function createCampaign(){
-  const steps=$("#cm-steps").value.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
-    const i=l.indexOf(":"); return {offset_days:parseFloat(l.slice(0,i))||0, text:l.slice(i+1).trim()};});
-  try{
-    const d=await call("POST","/api/campaigns",{name:$("#cm-name").value, platforms:picked("#cm-plats"), steps});
-    await loadCampaigns();
-    note("#cm-list", d.created?`✅ Campaign created (${esc(d.created)}) — ${steps.length} steps queued`
-                             :fail({message:d.error||"unexpected reply"}));
-  }catch(e){ note("#cm-list", fail(e)); }
-}
-async function loadCampaigns(){
-  const d=await call("GET","/api/campaigns").catch(e=>({campaigns:[],_err:e}));
-  const box=$("#cm-list"); box.innerHTML=""; if(d._err) return note("#cm-list", fail(d._err));
-  (d.campaigns||[]).forEach(c=>{ const card=el("div","card",
-    `<b>${esc(c.name)}</b> <span class="muted">(${esc(c.status)})</span><br>${c.sent}/${c.total} sent · ${esc(c.platforms.join(", "))}`);
-    const row=el("div","row");
-    ["pause","resume"].forEach(a=>{ const b=el("button","ghost",a); b.style.flex="1";
-      b.onclick=async()=>{ await call("POST",`/api/campaigns/${c.id}/${a}`).catch(()=>{}); loadCampaigns(); }; row.appendChild(b);});
-    card.appendChild(row); box.appendChild(card); });
-}
-async function addSchedule(){
-  try{
-    const d=await call("POST","/api/schedule",{at:$("#s-at").value, text:$("#s-text").value, platforms:picked("#s-plats")});
-    await loadSchedule();
-    note("#s-list", d.added?`✅ Scheduled for ${esc(d.at)}`:fail({message:d.error||"unexpected reply"}));
-  }catch(e){ note("#s-list", fail(e)); }
-}
-async function loadSchedule(){
-  const d=await call("GET","/api/schedule").catch(e=>({schedule:[],_err:e}));
-  const box=$("#s-list"); box.innerHTML=""; if(d._err) return note("#s-list", fail(d._err));
-  (d.schedule||[]).forEach(i=>box.appendChild(el("div","card",
-    `<b>${esc(i.status)}</b> · ${esc(i.at)}<br>${esc(i.text)} <span class="muted">→ ${esc(i.platforms.join(", "))}</span>`)));
-}
-async function tick(kind, dry){
-  // param is DRY (true = preview). The original signature read it as `send`,
-  // silently inverting the two buttons — the E2E asserts these semantics now.
-  const sel = kind==="campaigns" ? "#cm-list" : "#s-list";
-  if(!dry && !confirm("Really release due posts to the real platforms?")) return;
-  try{
-    const d=await call("POST",`/api/${kind}/tick`,{dry_run:dry});
-    if(kind==="campaigns"){ await loadCampaigns();
-      const n=Object.values(d.released||{}).reduce((a,b)=>a+b,0);
-      note(sel, `${d.dry_run?"🔍 Preview tick":"▶️ Tick"} — ${n} due step${n===1?"":"s"}${d.dry_run?" (nothing sent)":" released"}`);
-    } else { await loadSchedule();
-      const n=(d.sent||[]).length;
-      note(sel, `${d.dry_run?"🔍 Preview tick":"▶️ Tick"} — ${n} due post${n===1?"":"s"}${d.dry_run?" (nothing sent)":" sent"}`); }
-  }catch(e){ note(sel, fail(e)); }
-}
-async function monitor(){
-  const out=$("#m-out"); out.innerHTML="<p class='muted'>scanning…</p>";
-  try{
-    const d=await call("POST","/api/monitor",{query:$("#m-q").value});
-    out.innerHTML = Object.entries(d.results).map(([p,rows])=>{
-      const body = Array.isArray(rows) ? (rows.length?rows.slice(0,8).map(r=>`• ${esc(r.text||r.title||"")}`).join("<br>"):"—")
-        : `<span class="muted">${esc(rows.error||"n/a")}</span>`;
-      return `<div class="card"><b>${esc(p)}</b><pre>${body}</pre></div>`;}).join("");
-  }catch(e){ out.innerHTML=`<div class="card">${fail(e)}</div>`; }
-}
-async function loadHistory(){
-  const d=await call("GET","/api/history?tail=15").catch(e=>({history:[],_err:e}));
-  const box=$("#m-hist"); box.innerHTML=""; if(d._err) return note("#m-hist", fail(d._err));
-  (d.history||[]).slice().reverse().forEach(h=>box.appendChild(el("div","card",
-    `<span class="muted">${esc(h.ts)}</span> · ${esc(h.source)}<br>${esc((h.text||"").slice(0,80))}`)));
-}
-async function chat(){
-  const msg=$("#ch-msg").value.trim(); if(!msg)return; const log=$("#ch-log");
-  log.appendChild(el("div","card","<b>you</b><br>"+esc(msg))); $("#ch-msg").value="";
-  const wait=el("div","card","<span class='muted'>thinking…</span>"); log.appendChild(wait);
-  wait.scrollIntoView({block:"end"});
-  try{ const d=await call("POST","/api/chat",{message:msg, session_id:SESSION});
-    SESSION=d.session_id; wait.innerHTML="<b>manager</b><br>"+esc(d.reply||"(no reply)").replace(/\n/g,"<br>");
-    wait.scrollIntoView({block:"end"}); }
-  catch(e){ wait.innerHTML=fail(e); }
-}
-buildNav();
-if(TOKEN){ call("GET","/api/platforms").then(()=>{ $("#gate").classList.add("hide"); init(); }).catch(()=>{}); }
-</script>
+<script src="/console.js"></script>
 </body>
 </html>
