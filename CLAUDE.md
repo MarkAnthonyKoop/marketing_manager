@@ -100,6 +100,14 @@ Run it after ANY console.html change. History lesson baked into it: the original
 could never catch because it lived in the onclick wiring. The E2E asserts dry-previews +
 confirm-gated real sends; keep those assertions.
 
-Rendering rule for console.html: EVERY dynamic value goes through `esc()` before `innerHTML`
-(campaign names, chat replies, scrape rows are attacker-influenceable and CSP allows inline
-script). `md2html` escapes before transforming — keep that order.
+Rendering rule for the console: EVERY dynamic value goes through `esc()` before `innerHTML`
+(campaign names, chat replies, scrape rows are attacker-influenceable). `md2html` escapes
+before transforming — keep that order.
+
+STRICT CSP (2026-07-30): the console is split into `console.html` + `console.js` +
+`console.css` and the edge policy is `script-src 'self'; style-src 'self'` — NO inline
+script, style blocks, on*= handlers, or style= attributes anywhere in the page
+(`test_page_is_strict_csp_ready` enforces this; the E2E runs with the strict policy
+ENFORCED and asserts injected inline script is browser-blocked). Wire new UI in
+`console.js`'s `wire()` with addEventListener / element properties; new styling goes in
+`console.css` classes (JS `.style` property assignment is fine — CSP doesn't gate CSSOM).
