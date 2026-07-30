@@ -84,3 +84,22 @@ Run/test on `~/claude/.venv` (Python 3.14, has `requests`+`pytest`):
 `PYTHONPATH=~/claude ~/claude/.venv/bin/python -m pytest ~/claude/marketing_manager/tests -q`.
 Code still runs on the legacy `/usr/bin/python3` (3.9.6) too — keep `from __future__ import
 annotations` at the top of every module — but new work targets the venv (see `~/claude/CLAUDE.md`).
+
+## E2E UI suite (added 2026-07-30)
+The onboarding dialog, guide rendering, XSS escaping, and the tick-button semantics live in
+`console.html` where unit tests can't see them. `tests/e2e_console.py` (no `test_` prefix — 
+excluded from the offline pytest run by design) drives the real page in headless Chrome via CDP:
+
+```bash
+PYTHONPATH=~/claude ~/claude/.venv/bin/python ~/claude/marketing_manager/tests/e2e_console.py
+```
+
+26 checks; needs Google Chrome, runs fully offline (local ephemeral server + temp state).
+Run it after ANY console.html change. History lesson baked into it: the original
+`tick(kind,send)` signature silently inverted the Tick (dry)/(send) buttons — a bug unit tests
+could never catch because it lived in the onclick wiring. The E2E asserts dry-previews +
+confirm-gated real sends; keep those assertions.
+
+Rendering rule for console.html: EVERY dynamic value goes through `esc()` before `innerHTML`
+(campaign names, chat replies, scrape rows are attacker-influenceable and CSP allows inline
+script). `md2html` escapes before transforming — keep that order.
