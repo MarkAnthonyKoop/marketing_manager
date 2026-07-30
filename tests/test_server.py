@@ -101,3 +101,25 @@ def test_campaign_create_and_list_over_http(live_server):
 def test_unknown_route_404(live_server):
     status, _, _ = _req(live_server + "/api/nope", token=TOKEN)
     assert status == 404
+
+
+def test_guide_requires_token(live_server):
+    status, body, _ = _req(f"{live_server}/api/guide")
+    assert status == 401
+
+
+def test_guide_route_returns_branding(live_server, monkeypatch, tmp_path):
+    md = tmp_path / "g.md"
+    md.write_text("# Hi\n", encoding="utf-8")
+    monkeypatch.setenv("MARKETING_CONSOLE_GUIDE", str(md))
+    monkeypatch.setenv("MARKETING_CONSOLE_BRAND", "RenWay")
+    status, body, _ = _req(f"{live_server}/api/guide", token=TOKEN)
+    assert status == 200
+    assert body["brand"] == "RenWay" and body["markdown"] == "# Hi\n"
+
+
+def test_html_shell_has_onboarding(live_server):
+    import urllib.request
+    with urllib.request.urlopen(f"{live_server}/", timeout=10) as r:
+        html = r.read().decode()
+    assert 'id="wel"' in html and "startTour" in html and 'id="t-guide"' in html

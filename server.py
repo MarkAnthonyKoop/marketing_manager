@@ -78,6 +78,8 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         try:
             if path == "/api/platforms":
                 return self._json(api.platforms())
+            if path == "/api/guide":
+                return self._json(api.guide())
             if path == "/api/campaigns":
                 return self._json(api.list_campaigns())
             if path == "/api/schedule":

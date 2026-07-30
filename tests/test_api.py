@@ -93,3 +93,31 @@ def test_chat_injectable_ask():
     fake = lambda message, session_id=None: types.SimpleNamespace(text="drafted", session_id="s1")
     d = api.chat({"message": "draft"}, ask=fake)
     assert d["reply"] == "drafted" and d["session_id"] == "s1"
+
+
+# ---- guide / onboarding ----
+def test_guide_defaults_when_unconfigured(monkeypatch):
+    for v in ("MARKETING_CONSOLE_GUIDE", "MARKETING_CONSOLE_BRAND",
+              "MARKETING_CONSOLE_GREETING"):
+        monkeypatch.delenv(v, raising=False)
+    d = api.guide()
+    assert d["brand"] == "Marketing Console"
+    assert "Marketing Console" in d["greeting"]
+    assert d["missing"] is True and "markdown" not in d
+
+
+def test_guide_serves_branded_markdown(tmp_path, monkeypatch):
+    md = tmp_path / "GUIDE.md"
+    md.write_text("# Hello Ren\n\n- be brave\n", encoding="utf-8")
+    monkeypatch.setenv("MARKETING_CONSOLE_GUIDE", str(md))
+    monkeypatch.setenv("MARKETING_CONSOLE_BRAND", "RenWay")
+    monkeypatch.setenv("MARKETING_CONSOLE_GREETING", "Hey, I'm RenWay.")
+    d = api.guide()
+    assert d == {"brand": "RenWay", "greeting": "Hey, I'm RenWay.",
+                 "markdown": "# Hello Ren\n\n- be brave\n"}
+
+
+def test_guide_missing_file_degrades(monkeypatch, tmp_path):
+    monkeypatch.setenv("MARKETING_CONSOLE_GUIDE", str(tmp_path / "nope.md"))
+    d = api.guide()
+    assert d["missing"] is True

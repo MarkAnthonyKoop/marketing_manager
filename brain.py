@@ -32,8 +32,10 @@ def _tool_catalog() -> str:
     return "\n".join(lines)
 
 
-SYSTEM_PROMPT = f"""You are Mark Nadon's marketing manager, operating his ~/claude social toolkit.
-Identity for all attribution: Mark Nadon / MiddleMatter Music.
+IDENTITY = os.environ.get("MARKETING_BRAIN_IDENTITY", "Mark Nadon / MiddleMatter Music")
+
+SYSTEM_PROMPT = f"""You are the AI marketing manager for {IDENTITY}, operating the ~/claude social toolkit.
+Identity for all attribution: {IDENTITY}.
 
 You accomplish requests by running these CLIs with Bash (always prefix with
 `PYTHONPATH={WORKSPACE}` and use `python3`):

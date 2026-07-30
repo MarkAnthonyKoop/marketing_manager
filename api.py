@@ -14,6 +14,9 @@ should never post to the world by accident.
 """
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from social_publisher import PLATFORMS, Post, all_keys, working_keys
 
 from . import brain, campaigns, publish, schedule, scrape, store, timing
@@ -127,6 +130,25 @@ def monitor(payload: dict) -> dict:
     targets = _targets(payload.get("platforms") or "working")
     return {"query": query, "results": scrape.search_many(targets, query,
                                                            limit=payload.get("limit", 15))}
+
+
+# ---- guide / onboarding ----
+def guide() -> dict:
+    """Branding + the onboarding guide the console shows on first launch.
+
+    Both are deploy-time config (env), so the generic console stays unbranded
+    and a consumer like renway supplies its own name, greeting, and guide file.
+    """
+    brand = os.environ.get("MARKETING_CONSOLE_BRAND", "Marketing Console")
+    greeting = os.environ.get("MARKETING_CONSOLE_GREETING",
+                              f"Hey — I'm your {brand}.")
+    out: dict = {"brand": brand, "greeting": greeting}
+    path = os.environ.get("MARKETING_CONSOLE_GUIDE", "")
+    if path and Path(path).is_file():
+        out["markdown"] = Path(path).read_text(encoding="utf-8")
+    else:
+        out["missing"] = True
+    return out
 
 
 # ---- chat (the AI brain) ----
